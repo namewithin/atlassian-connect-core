@@ -65,14 +65,14 @@ class JWTClient
     /**
      * Send a request to the instance
      *
-     * @param string $method HTTP method
      * @param string $url Request URL
+     * @param string $method HTTP method
      * @param array $config HTTP Client config
      * @param bool $paginate Where request is paginated
      *
      * @return array|string
      */
-    public function sendRequest(string $method = 'get', string $url, array $config = [], bool $paginate = false)
+    public function sendRequest(string $url, string $method = 'get', array $config = [], bool $paginate = false)
     {
         // If URL has host we shouldn't use tenant baseUrl
         $baseUrl = preg_match('/^https?\:\/\//', $url) ? null : $this->tenant->base_url;
@@ -80,7 +80,10 @@ class JWTClient
         // If base url contains path, Guzzle client will truncate it
         // So we need to keep it and append to the request URL
         $baseUrlPath = parse_url($baseUrl, PHP_URL_PATH);
-        $url = rtrim($baseUrlPath, '/') . '/' . ltrim($url, '/');
+        
+        // Fix: Ensure baseUrlPath is not null before using rtrim
+        $baseUrlPathSafe = $baseUrlPath ? rtrim($baseUrlPath, '/') : '';
+        $url = $baseUrlPathSafe . '/' . ltrim($url, '/');
 
         $clientConfig = array_merge(['base_uri' => $baseUrl], $config);
 
@@ -116,7 +119,8 @@ class JWTClient
      */
     public function get(string $url, array $config = [])
     {
-        return $this->sendRequest('get', $url, $config);
+        // Fix: Pass url as first parameter
+        return $this->sendRequest($url, 'get', $config);
     }
 
     /**
@@ -130,7 +134,8 @@ class JWTClient
      */
     public function post(string $url, array $body = [], array $config = [])
     {
-        return $this->sendRequest('post', $url, array_merge($config, [
+        // Fix: Pass url as first parameter
+        return $this->sendRequest($url, 'post', array_merge($config, [
             'json' => $body
         ]));
     }
@@ -146,7 +151,8 @@ class JWTClient
      */
     public function put(string $url, array $body = [], array $config = [])
     {
-        $this->sendRequest('put', $url, array_merge($config, [
+        // Fix: Pass url as first parameter
+        $this->sendRequest($url, 'put', array_merge($config, [
             'json' => $body
         ]));
     }
@@ -161,7 +167,8 @@ class JWTClient
      */
     public function delete(string $url, array $config = [])
     {
-        $this->sendRequest('delete', $url, $config);
+        // Fix: Pass url as first parameter
+        $this->sendRequest($url, 'delete', $config);
     }
 
     /**
@@ -179,7 +186,8 @@ class JWTClient
     {
         $this->loadPaginator($paginatorConfig);
 
-        return $this->sendRequest('get', $url, $config, true);
+        // Fix: Pass url as first parameter
+        return $this->sendRequest($url, 'get', $config, true);
     }
 
     /**
@@ -200,7 +208,8 @@ class JWTClient
 
         unlink($stored->getRealPath());
 
-        return $this->sendRequest('post', $url, array_merge($config, [
+        // Fix: Pass url as first parameter
+        return $this->sendRequest($url, 'post', array_merge($config, [
             'headers' => ['X-Atlassian-Token' => 'nocheck'],
             'multipart' => [[
                 'name' => 'file',
